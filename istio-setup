@@ -1,5 +1,52 @@
-**Istio Setup**
+Istio Setup:
+============
 
-Steps:
-1. Install istio in your Ubuntu WSL    //#curl -L https://istio.io/downloadIstio | sh
-2. 
+Install Istio in K8s cluster:
+1. Download istio in your Ubuntu WSL    //#curl -L https://istio.io/downloadIstio | sh
+2. Move into the downloaded folder     //#cd istio-*
+3. Add istioctl to PATH                //#export PATH=$PWD/bin:$PATH
+4. Verify                              //#istioctl version
+5. Create Istio namespace              //#kubectl create namespace istio-system 
+6. Install Istio                      //#istioctl install -y  
+7. Validate                           //#kubectl get pods -n istio-system
+
+Enable automatic sidecar injection:
+1. Create a namespace                //#kubectl create namespace demo
+2. Enable Istio inject              //#kubectl label namespace demo istio-injection=enabled
+3. Verify                           //#kubectl get ns demo --show-labels
+4. Deploy a test app                 //#kubectl create deployment nginx --image=nginx -n demo
+5. Expose it                        //#kubectl expose deployment nginx --port=80 -n demo
+
+Inject istio into all future namespaces using Kyverno cluster policy:
+1. Install Kyverno
+    #kubectl create namespace kyverno
+    #kubectl apply -f https://github.com/kyverno/kyverno/releases/latest/download/install.yaml
+2. Validate
+    #kubectl get pods -n kyverno
+    You should see
+      kyverno-admission-controller     Running
+      kyverno-background-controller    Running
+      kyverno-cleanup-controller       Running
+3. Verify CRD exists    #kubectl get crd | grep kyverno
+4. Apply a policy that automatically labels new namespaces
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: auto-istio-injection
+spec:
+  rules:
+  - name: add-istio-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - Namespace
+    mutate:
+      patchStrategicMerge:
+        metadata:
+          labels:
+            istio-injection: enabled
+---
+5. Verify that policy      #kubectl get clusterpolicy
+6. Validate                #kubectl create ns atom
