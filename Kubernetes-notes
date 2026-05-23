@@ -1,0 +1,466 @@
+ETCD, Kube-Apiserver, Kube Controller Manager, Kube Scheduler,Kubelet, kube Proxy, Pods, Replica Sets, Deployments, Namespaces, Services, Imperative commands
+
+
+
+Sche duling:  Manual Scheduling, Labels and Selectors, Taints and Tolerations, Node Selectors, Node Affinity, Resource requirements and limits, Daemon Sets, Static Pods, Multiple Schedulers
+
+Logging and Monitoring: kubectl top nodes/pods; kubectl logs <pod-name> <container-name>
+
+Application Lifecycle Management: Rolling updates, commands and arguments, Environment variables, ConfigMaps, Secrets, scale applications/deployments, multi container pods, init-containers
+
+Cluster Maintenance: Node maintenance strategy for OS upgrades(drain/cordon commands),  cluster upgrades(kubeadm and kubelet) Backup and Restore
+
+Security: Transport Layer Security (TLS), Certificate Creation,  Certificates API, kubeconfig, RBAC (Role Based Access Controls), Cluster Roles and Role Bindings, Image Security, Security Contexts, , Developing Network Policies
+
+Storage: Persistent Volumes, PVC, Storage classes
+
+Networking: DNS(CoreDNS), CNI(Cluster Network Interfaces), Deploying Network Solution (Weave), Service Networking, Ingress
+
+Troubleshooting: Application/ Node /  Control Plane(components) failure, Networking failure
+
+
+ Kubernetes Purpose: The purpose of Kubernetes is to host your applications in the form of containers in an automated fashion so that you can easily deploy as many instances of your application as required and easily enable communication between different services within your application.
+
+Master node: is responsible for managing the Kubernetes cluster, storing information regarding the different nodes planning which containers cause where, monitoring the nodes and containers on them etc. The Master node does all of these using a set of components together known as the control plane components.
+
+Etcd: the Etcd is a database that stores information in a key-value format. The ETCD datastore stores information regarding the
+cluster such as the nodes, pods, configs, secrets, accounts, roles, bindings and others. Every information you see when you run the kubectl get command is from the ETCD server. Every change you make to your cluster, such as adding additional nodes, deploying pods or replica sets are updated in the ETCD  server
+
+                     If you set up your cluster from scratch then you deploy ETCD by downloading the ETCD binaries yourself, installing the binaries and configuring ETCD as a service in your master node yourself.  default port: 2379
+
+Scheduler: identifies the right node to place a container on based on the containers resource requirements, the worker nodes capacity or any other policies or constraints such as taints and toleration's or node affinity  rules that are on them.
+
+Node-controller: takes care of nodes. They're responsible for on-boarding new nodes to the cluster handling situations where nodes become unavailable or get gets destroyed
+
+Replication controller: ensures that the desired number of containers are running at all times in your replication group.
+
+Kube-apiserver: is the primary management component of kubernetes. The kube-api server is responsible for orchestrating all operations within the cluster. It exposes the Kubernetes API which is used by externals users to perform management operations on the cluster as well as the various controllers to monitor the state of the cluster and make the necessary changes as required and by the worker nodes to communicate with the server.
+            Kube-api server is responsible for Authenticating and validating requests, retrieving and updating data in ETCD data store, in fact, kube-api server is the only component that interacts directly with the etcd datastore.
+
+Kubelet: is an agent that runs on each node in a cluster. It listens for instructions from the kube-api server and deploys or destroys containers on the nodes as required. The kube-api server periodically fetches status reports from the kubelet to monitor the state of nodes and containers on them.
+
+Kube-proxy: service ensures that the necessary rules are in place on the worker nodes to allow the containers running on them to communicate each other. Kube-proxy is a process that runs on each node in the kubernetes cluster. Its job is to look for new services and every time a new service is created it creates the appropriate rules on each node to forward traffic to those services to the backend pods. One way it does this is using IPTABLES rules.
+
+kube controller manager: manages various controllers in Kubernetes. A controller is a process that continuously monitors the state of various components within the system and works towards bringing the whole system to the desired functioning state. For ex: Node
+
+Pods: When a new container is deployed we would need to deploy the new helper container as well. With PODs, kubernetes does all of this for us automatically. We just need to define what containers a POD consists of and the containers in a POD by default will have access to the same storage, the same network namespace, and same fate as in they will be created together and destroyed together.
+
+Static Pods: are managed directly by the kubelet daemon on a specific node, without the API server observing them. Unlike  Pods that are managed by the control plane (for example, a Deployment); instead, the kubelet watches each static Pod (and restarts it if it fails).
+Static Pods are always bound to one Kubelet on a specific node.
+The kubelet automatically tries to create a mirror Pod on the Kubernetes API server for each static Pod. This means that the Pods running on a node are visible on the API server, but cannot be controlled from there.
+
+Init Container
+==============
+It is a container additional to main/application container(which has our application)that we want to run before the start of our main container.
+After the completion of the init container process it gets terminated and then the main/application container starts
+Why: To register our pod somewhere (or) to download/ git clone database something before the start of the main/application container for its usage.
+
+Taints and Tolerations
+========================
+Node affinity, is a property of Pods that attracts them to a set of nodes (either as a preference or a hard requirement). Taints are the opposite -- they allow a node to repel a set of pods.
+
+Tolerations are applied to pods, and allow (but do not require) the pods to schedule onto nodes with matching taints.     
+
+Taints and tolerations work together to ensure that pods are not scheduled onto inappropriate nodes. One or more taints are applied to a node;
+this marks that the node should not accept any pods that do not tolerate the taints
+
+DaemonSet
+==========
+A DaemonSet ensures that all (or some) Nodes run a copy of a Pod. As nodes are added to the cluster, Pods are added to them. As nodes are removed from the cluster, those Pods are garbage collected.
+Deleting a DaemonSet will clean up the Pods it created.
+
+Daemon Sets are used for collecting logs and monitoring purposes.
+
+Configure Multiple Schedulers
+==============================
+Kubernetes ships with a default scheduler. If the default scheduler does not suit your needs you can implement your own scheduler. Not just that, you can even run multiple schedulers
+simultaneously alongside the default scheduler and instruct Kubernetes what scheduler to use for each of your pods.
+
+Pod Eviction Timeout: The time the cluster waits for the pods to come back online when they pods/node failed/removed. Default timeout period is 5 mins
+kubectl drain node1: In times of version updates. we need to drain the node first so that the users won't get affected to access those node pods.
+kubectl cordon/uncordon node1: To make the specific node unschedulable/schedulable  for further pods to get into that node1
+v1.11.3 == major.minor.patch
+Cluster Maintenance: Cluster Components like kube-apiserver; controller-manager; etcd cluster and so on can have different versions. Since kube-apiserver is the main guy in the cluster where all components talk to, No component version must be higher than the kube-apiserver except for kubectl component. Kubernetes supports only upto three recent minor updates.
+ three strategies:
+Strategy1: has downtime. Master upgrades and then after that all nodes at a time. When Master is being upgraded/down kubectl no longer works. Can't add/delete/edit pods/nodes. And all nodes would be accessible unless their pod fails for some reason.
+Strategy 2: No downtime. nodes upgrading one at a time.
+Strategy 3: No downtime. Add extra nodes with already upgrades version then shift the pods to that.
+First upgrade the kubeadm tool first and then other components
+
+Vim /etc/apt/sources.list.d/kubernetes.list
+Update the version in the url
+#apt update
+#apt-cache madison kubeadm
+apt-get install kubeadm=1.34.0-1.1
+#kubeadm upgrade plan v1.34.0  / kubeadm upgrade node
+#kubeadm upgrade apply v1.34.0
+#apt-get install kubelet=1.34.0-1.1
+#systemctl daemon-reload 
+#systemctl restart kubelet
+
+#kubeadm upgrade node
+#systemctl restart kubelet
+
+Backup and Restore:
+ETCDCTL_API=3 etcdctl snapshot save -h
+
+Encode and decode in base64:
+base64 file1.txt > file2.txt   	(or)  	base64 file.txt
+base64 -d encodedData.txt      	(or)    	base64 --decode encodedData.txt > originalData.txt
+echo "ab...cd" | base64
+echo "Ql...ab@" | base64 --decode
+Test the access using the command: kubectl auth can-i list nodes --as michelle
+What is the user used to execute the sleep process within the 'ubuntu-sleeper' pod?
+
+Run the command kubectl exec ubuntu-sleeper -- whoami and check the user running the user that is running the container.
+See configurations on any component certificate
+openssl x509 -in <file-path>.crt -text
+
+Kubectl api-resources. //to list the api-resources for RBAC
+
+Docker ps -a
+Docker logs container-id
+
+kubectl config current-context --kubeconfig=my-kube-config //to know the current context, run the command:
+kubectl config --kubeconfig=/root/my-kube-config use-context research // to set the current context
+
+
+Networking:
+ifconfig -a   // It shows all the interfaces used  (or)    cat /etc/network/interfaces   (or)
+ip a | grep -B2 10.3.116.12
+     
+ip link  		// to show all the physical links in the system
+
+
+What is the MAC address assigned to node01?Run the command: 
+arp node01
+ on the controlplane node.
+
+
+ssh node01 ifconfig ens3
+
+
+ssh node01 ip link
+
+
+ip route 	// to get the default gateway/route
+
+
+Inspect the kubelet service and identify the network plugin configured for Kubernetes.
+?l
+Run the command: 
+ps -aux | grep kubelet
+ and look at the configured 
+--network-plugin
+ flag
+
+
+The CNI binaries are located under 
+/opt/cni/bin
+ by default.
+
+
+What is the CNI plugin configured to be used on this kubernetes cluster? 
+Run the command: ls /etc/cni/net.d/ and identify the name of the plugin.
+
+
+netstat -natulp | grep kube-scheduler 	//it shows processes used by kube-scheduler along with ports that it is listening on
+
+
+netstat -natulp | grep etcd | grep LISTEN
+
+
+Weavenet Installation:
+
+
+What is the range of IP addresses configured for PODs on this cluster?
+
+The network is configured with weave. Check the weave pods logs using command kubectl logs <weave-pod-name> weave -n kube-system and look for ipalloc-range. 
+or
+Run the command 'ip addr show weave'
+
+
+What network range are the nodes in the cluster part of?
+
+
+
+
+What is the IP Range configured for the services within the cluster?
+
+Inspect the setting on kube-api server by running on command cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range
+What type of proxy is the kube-proxy configured to use?
+Check the logs of the kube-proxy pods. Command: kubectl logs kube-proxy-ft6n7 -n kube-system
+
+
+What is the root domain/zone configured for this kubernetes cluster?Run the command kubectl describe configmap coredns -n kube-system and look for the entry after kubernetes
+
+From the hr pod nslookup the mysql service and redirect the output to a file /root/CKA/nslookup.out
+
+kubectl exec -it hr -- nslookup mysql.payroll > /root/CKA/nslookup.out
+
+    
+Troubleshooting:
+Application Failure:
+1. Look for selector or endpoints mismatch b/w application pods and services
+2. Is the pod running properly? if not go by describe pods or logs command.
+Controlplane failure:
+1. Look for the status of nodes, pods, and controlplane components running as pods in kube-system ns(if the cluster is installed by kubeadm) or services by the command #service kube-apiserver status and so. Then check kubelet & kubeproxy components in worker nodes by #service kubelet status
+2. Check the logs of control plane components by #kubectl -n kube-system logs kube-apiserver-controlplane or #sudo journalctl -u kube-apiserver
+Node failure:
+#service kubelet status/start	or #top   or #df -h  	or	#sudo journalctl -u kubelet
+Go to kubelet configuration in node by #cd /etc/systemd/system/kubelet.service.d/  	and the get kubelet --config file location and --kubeconfig location(--kubeconfig is where the details for the API server stored)  in it and fix
+restart the daemon by #systemctl daemon-reload  	and #systemctl restart kubelet
+Kubernetes runs at 6443 port. crosscheck by #kubectl cluster-info
+Network Failure:
+
+Troubleshooting issues related to kube-proxy
+1. Check kube-proxy pod in the kube-system namespace is running.
+2. Check kube-proxy logs.
+3. Check configmap is correctly defined and the config file for running kube-proxy binary is correct.
+4. kube-config is defined in the config map.
+5. check kube-proxy is running inside the container
+
+
+
+Troubleshooting issues related to coreDNS
+1. If you find CoreDNS pods in pending state first check network plugin is installed.
+2. coredns pods have CrashLoopBackOff or Error state
+If you have nodes that are running SELinux with an older version of Docker you might experience a scenario where the coredns pods are not starting. To solve that you can try one of the following options:
+a)Upgrade to a newer version of Docker.
+b)Disable SELinux.
+c)Modify the coredns deployment to set allowPrivilegeEscalation to true:
+
+
+kubectl -n kube-system get deployment coredns -o yaml | \
+sed 's/allowPrivilegeEscalation: false/allowPrivilegeEscalation: true/g' | \
+kubectl apply -f -
+d)Another cause for CoreDNS to have CrashLoopBackOff is when a CoreDNS Pod deployed in Kubernetes detects a loop.
+
+Kubernetes resources for coreDNS are:   
+a service account named coredns,
+cluster-roles named coredns and kube-dns
+clusterrolebindings named coredns and kube-dns, 
+a deployment named coredns,
+a configmap named coredns and a
+service named kube-dns.
+
+How to use json path queries in kubernetes with kubectl utility:
+
+kubectl get pods -o json
+kubectl get pods -o=jsonpath='{@}'
+kubectl get pods -o=jsonpath='{.items[0]}'
+kubectl get pods -o=jsonpath='{.items[0].metadata.name}'
+kubectl get pods -o=jsonpath="{.items[*][1'metadata.name', 'status.capacity']}"
+kubectl get pods -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.startTime}{"\n"}{end}'
+
+kubectl get nodes -o=custom-columns=<COLUMN NAME>:<JSON PATH>
+kubectl get nodes -p=custom-columns=NODE:.metadata.name ,CPU:.status.capacity.cpu
+
+A set of Persistent Volumes are available. Sort them based on their capacity and store the result in the file 
+/opt/outputs/storage-capacity-sorted.txt
+kubectl get pv --sort-by=.spec.capacity.storage > /opt/outputs/storage-capacity-sorted.txt
+
+
+That was good, but we don't need all the extra details. Retrieve just the first 2 columns of output and store it in /opt/outputs/pv-and-capacity-sorted.txt
+The columns should be named NAME and CAPACITY. Use the custom-columns option. And remember it should still be sorted as in the previous question.
+kubectl get pv --sort-by=.spec.capacity.storage -o=custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage > /opt/outputs/pv-and-capacity-sorted.txt
+
+
+kubectl get nodes -o=jsonpath="{.items[*].status.nodeInfo.osImage}" > /opt/outputs/nodes_os_x43kj56.txt
+
+ls -ltr | tail -2
+kubectl api-versions | grep certif
+sudo -i
+What is the user used to execute the sleep process within the 'ubuntu-sleeper' pod?
+
+kubectl exec ubuntu-sleeper -- whoami
+
+Since the blue application and the db-service are in different namespaces in this case, we need to use the service name along with the namespace to access the database. The FQDN (fully Qualified Domain Name) for the db-service in this example would be 
+db-service.dev.svc.cluster.local
+.
+
+Kubectl help:
+kubectl explain pods --recursive | grep envFrom -A5
+
+kubectl api-resources
+
+kubectl get pods --as dev-user
+
+kubectl set image deployment web1 nginx=lfccncf/nginx:latest --record
+
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service > /root/CKA/nginx.svc
+
+kubectl get pod nginx-resolver -o wide
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup <P-O-D-I-P.default.pod> > /root/CKA/nginx.pod
+
+Create a static pod on node01 called nginx-critical with image nginx and make sure that it is recreated/restarted automatically in case of a failure.
+Use /etc/kubernetes/manifests as the Static Pod path for example.
+
+To create a static pod called nginx-critical by using below command:
+kubectl run nginx-critical --image=nginx --dry-run=client -o yaml > static.yaml
+
+
+Copy the contents of this file or use scp command to transfer this file from controlplane to node01 node.
+root@controlplane:~# scp static.yaml node01:/root/
+
+
+To know the IP Address of the node01 node:
+root@controlplane:~# kubectl get nodes -o wide
+
+
+# Perform SSH
+root@controlplane:~# ssh node01
+OR
+root@controlplane:~# ssh <IP of node01>
+
+
+On node01 node:
+Check if static pod directory is present which is /etc/kubernetes/manifests, if it's not present then create it.
+root@node01:~# mkdir -p /etc/kubernetes/manifests
+
+
+Add that complete path to the staticPodPath field in the kubelet config.yaml file.
+root@node01:~# vi /var/lib/kubelet/config.yaml
+
+
+now, move/copy the static.yaml to path /etc/kubernetes/manifests/.
+root@node01:~# cp /root/static.yaml /etc/kubernetes/manifests/
+
+
+Go back to the controlplane node and check the status of static pod:
+root@node01:~# exit
+logout
+root@controlplane:~# kubectl get pods
+Create a new deployment called nginx-deploy, with image nginx:1.16 and 1 replica. Next upgrade the deployment to version 1.17 using rolling update.
+info_outlineSolution
+Explore the --record option while creating the deployment while working with the deployment definition file. Then make use of the kubectl apply command to create or update the deployment.
+To create a deployment definition file nginx-deploy:
+To create a resource from definition file and to record:
+To view the history of deployment nginx-deploy:
+To upgrade the image to next given version:
+To view the history of deployment nginx-deploy:
+
+Create a new service account with the name pvviewer. Grant this Service account access to list all PersistentVolumes in the cluster by creating an appropriate cluster role called pvviewer-role and ClusterRoleBinding called pvviewer-role-binding.
+Next, create a pod called pvviewer with the image: redis and serviceAccount: pvviewer in the default namespace
+
+Pods authenticate to the API Server using ServiceAccounts. If the serviceAccount name is not specified, the default service account for the namespace is used during a pod creation.
+Reference: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+Now, create a service account pvviewer:
+kubectl create serviceaccount pvviewer
+
+
+To create a clusterrole:
+kubectl create clusterrole pvviewer-role --resource=persistentvolumes --verb=list
+
+
+To create a clusterrolebinding:
+kubectl create clusterrolebinding pvviewer-role-binding --clusterrole=pvviewer-role --serviceaccount=default:pvviewer
+
+
+Solution manifest file to create a new pod called pvviewer as follows:
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pvviewer
+  name: pvviewer
+spec:
+  containers:
+  - image: redis
+    name: pvviewer
+  # Add service account name
+  serviceAccountName: pvviewer
+
+List the InternalIP of all nodes of the cluster. Save the result to a file /root/CKA/node_ips.
+Answer should be in the format: InternalIP of controlplane<space>InternalIP of node01 (in a single line)
+Explore the jsonpath loop.
+kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' > /root/CKA/node_ips
+
+Create a new user key 
+openssl req -new -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+
+
+
+Multiple Schedulers :
+- --leader-elect=false
+- --port=10282 
+- --scheduler-name=my-scheduler
+- --secure-port=0
+
+
+Services Vs Ingress Vs NetworkPolicy
+Service:
+
+
+
+
+
+kubeDNS: Kubernetes DNS schedules Pod and Services in the cluster and to configures the  kubelets to tell the containers to resolve their DNS Names through services IP's.
+
+
+
+
+StorageClasses:
+
+Before Storage class we
+
+
+What is headless service in kubernetes?
+It is possible to create a service grouping that does not allocate an IP address or forward traffic, if there is a reason that you want to definitively control what specific pods you connect and communicate with. This kind of service is called a headless service.
+
+
+Calico and Ciliuim:
+CNI: Container Network Interface: are a set of standards on how programs must be developed to solve networking challenges in a container runtime environment. Here programs
+equals to plugins. CNI will tell how plugins must be developed and how Container Runtime shall invoke them.
+CNI sets a set of responsibilities to Container Runtime and Plugins.
+For Container Runtime:
+It is responsible to create a network namespace for each container.
+It shall Identify the networks that container must attach to. 
+And Container Runtime must invoke the plugin(BRIDGE) when the container is created using the ADD command. 
+DEL command to invoke the plugin(BRIDGE) when the container is deleted. 
+How to configure a Network configuration in JSON Format
+For Plugins:
+Must support command line arguments ADD/DEL/CHECK
+Must support parameters container ID, Network NS etc.
+Must Manage IP Address assignment to PODS
+Must Return results in a specific format. 
+Calico and Cilium are third party plugins that adhere to the CNI standards and thus can be invoked by container runtime. 
+Calico: Open source networking and network security solution for containerized environments like k8s. 
+Features:
+BGP Based Networking: Border Gateway Protocol for dynamic routing. 
+Network Policy: enforces NP to control and secure traffic b/w pods
+Scalability: suitable for large K8s clusters
+Interoperability: suitable for multi-cloud and hybrid cloud scenarios
+
+Cilium: Open source networking and security plugin for enhanced observability and security and network connectivity.
+Features:
+Uses eBPF technology for fine grained observability and control.
+API aware network security policies which allows us to fine grain control over application traffic.
+Transparent Encryption: It provides encryption b/w pods and nodes without requiring application changes. 
+Layer 7 Proxy: for handling HTTP and gRPC traffic
+Load Balancing: 
+
+September 5, 2024:
+Vanilla kubernetes: is a basic setup of k8s which is as basic as it gets. It is the opposite of managed k8s.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
