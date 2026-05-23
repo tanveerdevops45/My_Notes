@@ -1,0 +1,23 @@
+Pre-requisites:
+Make sure you have ubuntu wsl or gitbash. As of now I have Ubuntu WSL.
+
+Steps:
+1. Install docker and validate    //#docker version
+2. Install kubectl                //#kubectl version --client
+3. Install kind                   //#kind version
+4. Create a cluster               //#kind create cluster, #kind create cluster --name mycluster --config kind-config.yaml
+5. Verify Cluster                //#kubectl cluster-info
+6. List cluster                 //#kind get clusters
+7. Delete cluster                //#kind delete cluster ,#kind delete clusters --all
+
+Create Multi-Node cluster from kind config file:
+---
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+- role: control-plane
+- role: worker
+- role: worker
+---
+Verify the cluster details      //#kubectl get nodes  
