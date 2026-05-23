@@ -1,3 +1,11 @@
+Why do we need Istio:
+=====================
+Istio gives control, security, visibility between services without changing application code.
+    Control: Traffic management --> Canary, Blue/Green, A/B Testing deployments, retries, timeouts, traffic mirroring.
+    Security: mTLS, Authentication and Authorization policies.
+    Visibility: See what services are doing with metrics like Request count, Latency, Errors, Success rate. 
+    Resilience: Handles failures automatically --> retries, timeouts, fault Injection
+
 Istio Setup:
 ============
 
