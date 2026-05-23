@@ -1,0 +1,5 @@
+**Istio Setup**
+
+Steps:
+1. Install istio in your Ubuntu WSL    //#curl -L https://istio.io/downloadIstio | sh
+2. 
