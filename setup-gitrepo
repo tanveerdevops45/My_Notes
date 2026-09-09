@@ -28,3 +28,17 @@ Install flux
     #brew install fluxcd/tap/flux
     #flux --version
     #flux check --pre  //check whether your cluster meets Flux's prerequisites
+Create a GitHub repository
+Create a GitHub token and export it
+Bootstrap Flux
+   flux bootstrap github \
+  --owner=YOUR_USERNAME \
+  --repository=<repo-name> \
+  --branch=main \
+  --path=clusters/<cluster-name> \
+  --personal
+Verify Flux
+   #kubectl get pods -n flux-system
+   #flux get all
+Now put your application in Git
+
