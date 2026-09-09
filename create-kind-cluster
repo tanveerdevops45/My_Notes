@@ -3,9 +3,24 @@ Make sure you have ubuntu wsl or gitbash. As of now I have Ubuntu WSL.
 
 Steps:
 1. Install docker and validate    //#docker version
-2. Install kubectl                //#kubectl version --client
-3. Install kind                   //#kind version
-4. Create a cluster               //#kind create cluster, #kind create cluster --name mycluster --config kind-config.yaml
+      #For Apple Silicon #uname -m  //arm64
+      #Download docker from official website https://docs.docker.com/desktop/setup/install/mac-install/?utm_source=chatgpt.com
+      #cd ~/Downloads
+      #sudo hdiutil attach Docker.dmg
+      #sudo /Volumes/Docker/Docker.app/Contents/MacOS/install
+      #sudo hdiutil detach /Volumes/Docker
+      #open -a Docker //start a docker
+      #docker desktop start
+      #docker --version
+2. Install kubectl      
+      #brew install kubectl
+      #kubectl version --client
+3. Install kind   
+      #brew install kind
+      #kind version
+4. Create a cluster               
+      #kind create cluster
+      #kind create cluster --name mycluster --config kind-config.yaml
 5. Verify Cluster                //#kubectl cluster-info
 6. List cluster                 //#kind get clusters
 7. Delete cluster                //#kind delete cluster ,#kind delete clusters --all
