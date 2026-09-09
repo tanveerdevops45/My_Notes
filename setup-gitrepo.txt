@@ -1,0 +1,30 @@
+GitHub → Flux → Kustomise → Kind
+--------------------------------
+
+1. Kind
+   ↓
+2. kubectl
+   ↓
+3. Flux CLI
+   ↓
+4. GitHub repo
+   ↓
+5. GitHub PAT
+   ↓
+6. flux bootstrap github
+   ↓
+7. Verify flux-system
+   ↓
+8. Create nginx manifests
+   ↓
+9. Create Flux Kustomization
+   ↓
+10. git push
+   ↓
+11. Flux deploys nginx
+
+Kind cluster is installed
+Install flux
+    #brew install fluxcd/tap/flux
+    #flux --version
+    #flux check --pre  //check whether your cluster meets Flux's prerequisites
